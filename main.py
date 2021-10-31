@@ -9,47 +9,51 @@ from Control_add import ctrl_add
 import networkx as nx
 import itertools
 from typing import Iterable
+import sys
 
 from multiprocessing import Process
 
-""" Mirror contrib.routing.greedy_test.py and """
+""" Mirror contrib.routing.greedy_test.py"""
 
 def main():
-    #f = open("cirq_test_out.txt", "w")
-
     circuit = cirq.Circuit()
-    choice = int(input("1. Add two numbers\n2. Multiply two numbers\n3. Multiply the first n numbers together"))
+
+    """ASSUMES AN EXISTING FILE OF THE NAME cirq_test_out.txt !!!!!!"""
+    f = open("cirq_test_out.txt", "a")
+    exTestMultiply(circuit, 11, 12)
+    """choice = int(input("1. Add two numbers\n2. Multiply two numbers\n3. Multiply the first n numbers together"))
     if(choice == 1):
         testAdd(circuit)
     if(choice == 2):
         testMultiply(circuit)
     if(choice == 3):
-        exampleMultiply()
+        exampleMultiply()"""
 
     simulator = cirq.Simulator()
     result = simulator.run(circuit)
 
-    print(circuit)
+    #print(circuit)
     #f.write(str(circuit))
-    print(result)
+    #print(result)
     circdep = 0
     for moment in circuit:
         circdep+=1
-    print(circdep)
-    print("Now running tests: ")
-    width = 3
-    height = 4
-    depth = 3
-    p_qubits = [ThreeDQubit(row, col, lay)
-                for row in range(width)
-                for col in range(height)
-                for lay in range(depth)]
-    #my_pasq_dev = PasqalVirtualDevice(control_radius=1, qubits=p_qubits)
+    #print(circdep)
+    #print("Now running tests: ")
+    if(int(sys.argv[1]) == 3):
+        width = int(sys.argv[2])
+        height = int(sys.argv[3])
+        depth = int(sys.argv[4])
+        p_qubits = [ThreeDQubit(row, col, lay)
+                    for row in range(width)
+                    for col in range(height)
+                    for lay in range(depth)]
+        device_graph = nx.Graph(
+            pair for pair in itertools.combinations(p_qubits, 2) if _my_manhattan_distance(*pair) == 1
+        )
+    if(int(sys.argv[1]) == 2):
+       device_graph = ccr.get_grid_device_graph(int(sys.argv[2]), int(sys.argv[3]))
 
-    #device_graph = nx.Graph(
-        #pair for pair in itertools.combinations(p_qubits, 2) if _my_manhattan_distance(*pair) == 1
-    #)
-    device_graph = ccr.get_grid_device_graph(5, 4)
     sn = ccr.greedy.route_circuit_greedily(circuit, device_graph, max_search_radius=3, random_state=1) # This random seed is the reason for variation
     #print(str(sn))
 
@@ -64,14 +68,18 @@ def main():
                     swapcount += 1
         if temp != swapcount:
             swapdepth += 1
-    print(swapcount)
-    print(swapdepth)
-
+    if(int(sys.argv[1]) == 2):
+        outputdimdata = [sys.argv[2], " by ", sys.argv[3], "\n"]
+    if(int(sys.argv[1]) == 3):
+        outputdimdata = [sys.argv[2], " by ", sys.argv[3], " by ", sys.argv[4], "\n"]
+    testoutput = ["SWAP count: ", str(swapcount), "\nSWAP depth: ", str(swapdepth), "\n"]
+    f.writelines(outputdimdata)
+    f.writelines(testoutput)
     """for moment:
             for gate:
                     is swap?"""
 
-    #f.close()
+    f.close()
 
 def _my_manhattan_distance(qubit1: ThreeDQubit, qubit2: ThreeDQubit) -> int: # mirrors ccr._manhattan_distance()
     return abs(qubit1.distance(qubit2))
