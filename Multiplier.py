@@ -1,5 +1,5 @@
 import cirq
-from arithmetic.Control_add import ctrl_add
+from Control_add import ctrl_add
 # testing qubit setup
 # circuit.append(cirq.H(q) for q in qubitsA)
 # circuit.append(cirq.Z(q) for q in qubitsB)
@@ -45,10 +45,17 @@ class multiplier:
 
     def multiply(self):
         circuit = cirq.Circuit()
+        #for gate-counting purposes
+        toffcount = 0
         # step 1: toffolis
         for i in range(0, self.size):
-            circuit.append(cirq.TOFFOLI(self.B[0], self.A[i], self.out[i]))
+            circuit.append(cirq.decompose(cirq.TOFFOLI(self.B[0], self.A[i], self.out[i])))
+            toffcount += 1
         # step 2 (and 3):
         for i in range(1, self.size):
             circuit += ctrl_add(self.B[i], self.A, self.out[i:i+self.size+2]).construct_circuit()
+
+        print("Toffoli count in multiply: ")
+        print(toffcount)
+
         return circuit;
